@@ -3,7 +3,7 @@
 
 struct Process
 {
-    int AT, BT, FT, id;
+    int AT, BT, FT,TAT,WT, id;
 };
 
 void SortByAT(struct Process *process, int length)
@@ -48,9 +48,25 @@ void FCFS()
 
     SortByAT(process, np);
 
+    // ctime = current time
+    int ctime;
+    ctime = process[0].AT;
     for (int i = 0; i < np; i++)
     {
-        printf("\nP%d\t%d\t%d", process[i].id, process[i].AT, process[i].BT);
+        if (process[i].AT > ctime)
+        {
+            ctime = process[i].AT;
+        }
+        ctime += process[i].BT;
+        process[i].FT = ctime;
+    }
+
+    printf("Process | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
+    for (int i = 0; i < np; i++)
+    {
+        process[i].TAT = process[i].FT - process[i].AT;
+        process[i].WT = process[i].TAT - process[i].BT;
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id, process[i].AT, process[i].BT, process[i].FT,process[i].TAT,process[i].WT);
     }
 }
 
@@ -58,7 +74,7 @@ void main()
 {
 
     int selection;
-    printf("Enter the Choice:\n1) FCFS");
+    printf("Select Schedular:\n1) FCFS");
     scanf("%d", &selection);
     switch (selection)
     {
