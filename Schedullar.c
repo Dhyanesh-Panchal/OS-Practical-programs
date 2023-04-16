@@ -4,12 +4,75 @@
 struct Process
 {
     int AT, BT, FT, TAT, WT, id;
+    int RBT;
+    int completed : 1;
 };
 
-struct Node{
+struct Node
+{
     struct Process data;
     struct Node *next;
 };
+
+// struct queue{
+//     struct Node* head;
+// };
+
+struct Node* RBTpriorityInsert(struct Node *queue, struct Process process)
+{
+
+    if (!queue)
+    {
+        queue = (struct Node *)malloc(sizeof(struct Node));
+        queue->data = process;
+        queue->next = NULL;
+        return queue;
+    }
+
+    struct Node *t = queue;
+
+    struct Node *new = (struct Node *)malloc(sizeof(struct Node));
+    new->data = process;
+    new->next = NULL;
+
+    if (t->next == NULL)
+    {
+        if (t->data.RBT < new->data.RBT)
+        {
+            t->next = new;
+        }
+        else
+        {
+            new->next = t;
+            queue = new;
+        }
+        return queue;
+    }
+    if (t->data.RBT > new->data.RBT)
+        ;
+    {
+        new->next = t->next;
+        queue = new;
+        return queue;
+    }
+
+    while (t->next != NULL && t->next->data.RBT < new->data.RBT)
+    {
+        t = t->next;
+    }
+
+    new->next = t->next;
+    t->next = new;
+    return queue;
+}
+
+struct Process getLowestRBTProcess(struct Node *queue)
+{
+    struct Process *p =(struct Process *)malloc(sizeof(struct Process ));
+    *p = queue->data;
+    queue = queue->next;
+    return *p;
+}
 
 void SortByAT(struct Process *process, int length)
 {
@@ -49,7 +112,7 @@ void FCFS()
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
-        process[i].id = i + 1;
+        process[i].id = i;
     }
 
     printf("\n\tOver Head Time: ");
@@ -76,7 +139,7 @@ void FCFS()
         ctime += overheadTime;
     }
 
-    int totalTAT=0,totalWT=0;
+    float totalTAT = 0, totalWT = 0;
 
     printf("Process | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
     for (int i = 0; i < np; i++)
@@ -84,16 +147,16 @@ void FCFS()
         process[i].TAT = process[i].FT - process[i].AT;
         process[i].WT = process[i].TAT - process[i].BT;
 
-        totalTAT+=process[i].TAT;
-        totalWT+=process[i].WT;
-        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+        totalTAT += process[i].TAT;
+        totalWT += process[i].WT;
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
     }
-    printf("\nAverage Turn Around Time: %4.3f ms",totalTAT/(float)np);
-    printf("\nAverage Waiting Time: %4.3f ms",totalWT/(float)np);
+    printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
+    printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
 }
 
-
-void SJF(){
+void SJF()
+{
 
     int np;
     printf("\n\t\tSJF Selected.\n No. of processes:");
@@ -106,22 +169,81 @@ void SJF(){
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
-        process[i].id = i + 1;
+        process[i].id = i;
     }
 
     printf("\n\tOver Head Time: ");
     int overheadTime;
     scanf("%d", &overheadTime);
 
+    // SortByAT(process,np);
+
+    int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0;
+    struct Node *processQueue = NULL;
+    while (processCount != np)
+    {
+        // Insert Arriving processes in queue;
+        for (int i = 0; i < np; i++)
+        {
+            if (process[i].AT == ctime)
+            {
+                processQueue=RBTpriorityInsert(processQueue, process[i]);
+            }
+        }
+
+        if (cprocessRBT == 0)
+        {
+            // process completed, CPU free for new process
+            if (cprocessIndx == -1)
+            {
+                // NO initial process
+                cprocessIndx = getLowestRBTProcess(processQueue).id;
+                cprocessRBT = process[cprocessIndx].BT;
+            }
+            else
+            {
+                // Fill data for completed process
+                process[cprocessIndx].FT = ctime;
+                process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
+                process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+
+                // Add overhead for switching
+                ctime += overheadTime;
+
+                // Give CPU a new Process
+                cprocessIndx = getLowestRBTProcess(processQueue).id;
+                cprocessRBT = process[cprocessIndx].BT;
+                processCount++;
+            }
+        }
+
+        ctime++;
+        cprocessRBT--;
+    }
 
 
+    // PRINT FINAL TABLE and AVERAGES
+    float totalTAT = 0, totalWT = 0;
+
+    printf("Process | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
+    for (int i = 0; i < np; i++)
+    {
+        process[i].TAT = process[i].FT - process[i].AT;
+        process[i].WT = process[i].TAT - process[i].BT;
+
+        totalTAT += process[i].TAT;
+        totalWT += process[i].WT;
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+    }
+    printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
+    printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
 }
 
 void main()
 {
 
     int selection;
-    printf("Select Schedular:\n1) FCFS\n2)SJF");
+    printf("Select Schedular:\n1) FCFS\n2) SJF");
     scanf("%d", &selection);
     switch (selection)
     {

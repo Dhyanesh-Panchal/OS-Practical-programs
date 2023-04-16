@@ -1,3 +1,4 @@
+Sample test for FCFS
 1
 4
 10
@@ -9,3 +10,17 @@
 15
 7
 0
+
+Sample text for SJF
+2
+4
+0
+6
+0
+8
+0
+7
+0
+3
+0
+
