@@ -6,15 +6,21 @@ struct Process
     int AT, BT, FT, TAT, WT, id;
 };
 
+struct Node{
+    struct Process data;
+    struct Node *next;
+};
+
 void SortByAT(struct Process *process, int length)
 {
     int swapped = 0;
     for (int i = 0; i < length - 1; i++)
     {
-        for (int j = i; j < length - i - 1; j++)
+        for (int j = 0; j < length - i - 1; j++)
         {
             if (process[j].AT > process[j + 1].AT)
             {
+                // printf("\n\t %d and %d",process[j].AT,process[j + 1].AT);
                 swapped = 1;
                 struct Process temp;
                 temp = process[j];
@@ -52,6 +58,10 @@ void FCFS()
 
     SortByAT(process, np);
 
+    // for(int i=0;i<np;i++){
+    //     printf("\n %d",process[i].AT);
+    // }
+
     // ctime = current time
     int ctime;
     ctime = process[0].AT;
@@ -82,16 +92,44 @@ void FCFS()
     printf("\nAverage Waiting Time: %4.3f ms",totalWT/(float)np);
 }
 
+
+void SJF(){
+
+    int np;
+    printf("\n\t\tSJF Selected.\n No. of processes:");
+    scanf("%d", &np);
+    struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
+
+    for (int i = 0; i < np; i++)
+    {
+        printf("For Process P%d:\n\tArrival time:", i + 1);
+        scanf("%d", &process[i].AT);
+        printf("\t Burst Time:");
+        scanf("%d", &process[i].BT);
+        process[i].id = i + 1;
+    }
+
+    printf("\n\tOver Head Time: ");
+    int overheadTime;
+    scanf("%d", &overheadTime);
+
+
+
+}
+
 void main()
 {
 
     int selection;
-    printf("Select Schedular:\n1) FCFS");
+    printf("Select Schedular:\n1) FCFS\n2)SJF");
     scanf("%d", &selection);
     switch (selection)
     {
     case 1:
         FCFS();
+        break;
+    case 2:
+        SJF();
         break;
 
     default:
