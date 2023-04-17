@@ -24,3 +24,15 @@ Sample text for SJF
 3
 0
 
+Sample test for SRTN
+3
+4
+0
+10
+1
+6
+3
+2
+5
+4
+0
