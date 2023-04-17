@@ -3,7 +3,7 @@
 
 struct Process
 {
-    int AT, BT, FT, TAT, WT, id;
+    int AT, BT, FT, TAT, WT, id,priority;
     int RBT; // Remaining Burst Time
     int arrived;
     int completed;
@@ -454,8 +454,68 @@ void SRTN()
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
 }
 
+
+
 void PriorityNonPremptive()
 {
+    int np;
+    printf("\n\t\tSRTN Selected.\n No. of processes:");
+    scanf("%d", &np);
+    struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
+
+    for (int i = 0; i < np; i++)
+    {
+        printf("For Process P%d:\n\tArrival time:", i + 1);
+        scanf("%d", &process[i].AT);
+        printf("\t Burst Time:");
+        scanf("%d", &process[i].BT);
+        printf("\t PRiority:");
+        scanf("%d", &process[i].priority);
+        process[i].RBT = process[i].BT;
+        process[i].id = i;
+        process[i].arrived = 0;
+        process[i].completed = 0;
+    }
+
+    printf("\n\tOver Head Time: ");
+    int overheadTime;
+    scanf("%d", &overheadTime);
+
+    int current_time=0;
+    int total_waiting_time=0;
+    int total_turn_around_time=0;
+
+    // run the processes
+    for(int i = 0; i < np; i++) {
+        if(current_time < process[i].AT) {
+            current_time = process[i].AT;
+        }
+
+        current_time += overheadTime;
+        process[i].FT = current_time + process[i].BT;
+        process[i].TAT = process[i].FT - process[i].AT;
+        process[i].WT = process[i].TAT - process[i].BT;
+        total_waiting_time += process[i].WT;
+        total_turn_around_time += process[i].TAT;
+
+        current_time += process[i].BT;
+    }
+
+    // PRINT FINAL TABLE and AVERAGES
+    float totalTAT = 0, totalWT = 0;
+
+    printf("\n\nProcess | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
+    for (int i = 0; i < np; i++)
+    {
+        process[i].TAT = process[i].FT - process[i].AT;
+        process[i].WT = process[i].TAT - process[i].BT;
+
+        totalTAT += process[i].TAT;
+        totalWT += process[i].WT;
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+    }
+    printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
+    printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
 }
 
 void PriorityPremptive()
@@ -494,7 +554,7 @@ int getNextIndx(struct Process *p, int length, int prevIndx, int ctime)
 void Round_Robin()
 {
     int np;
-    printf("\n\t\tSJF Selected.\n No. of processes:");
+    printf("\n\t\tRound robin Selected.\n No. of processes:");
     scanf("%d", &np);
     struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
 
@@ -521,6 +581,7 @@ void Round_Robin()
     SortByAT(process, np);
 
     int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0, cSliceCounter = time_slice;
+    printf("\ntime| process | RBT\n----------------------");
     while (processCount != np)
     {
         if (process[0].AT <= ctime)
@@ -550,6 +611,7 @@ void Round_Robin()
                 cprocessIndx = getNextIndx(process, np, cprocessIndx, ctime);
                 cprocessRBT = process[cprocessIndx].RBT;
                 cSliceCounter = time_slice;
+                printf("\n----------------------");
             }
 
             if (cSliceCounter == 0)
@@ -561,6 +623,7 @@ void Round_Robin()
                     ctime += overheadTime;
 
                     cprocessIndx = nextIndx;
+                    printf("\n----------------------");
                 }
                 cprocessRBT = process[cprocessIndx].RBT;
                 cSliceCounter = time_slice;
@@ -569,7 +632,7 @@ void Round_Robin()
             cSliceCounter--;
             cprocessRBT--;
             process[cprocessIndx].RBT--;
-            printf("\n %2d |  P%d  |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
+            printf("\n %2d |   P%d   |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
         }
         ctime++;
         // printf("\n\t\t\t\t%d", processCount);
@@ -600,7 +663,7 @@ void main()
 {
 
     int selection;
-    printf("Select Schedular:\n1) FCFS\n2) SJF\n3) SRTN\n4)Priority (Non-Premptive)");
+    printf("Select Schedular:\n1) FCFS\n2) SJF\n3) SRTN\n4)Priority (Non-Premptive)\n5) Priority Premptive\n6)Round Robin");
     scanf("%d", &selection);
     switch (selection)
     {
