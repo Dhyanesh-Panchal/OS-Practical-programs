@@ -338,7 +338,7 @@ void SRTN()
 
     struct Node *processQueue = NULL;
 
-    printf("\n-------------------------------------------------------------------------------------------");
+    printf("\n--------------------------");
     while (processCount != np)
     {
         // Insert Arriving processes in queue;
@@ -362,6 +362,7 @@ void SRTN()
                     if (process[i].AT != process[cprocessIndx].AT) // Process Switching due to PREMPTION
                     {
                         ctime += overheadTime; // Add overhead
+                        printf("\n--------------------------");
                     }
                     cprocessIndx = i;
                     cprocessRBT = process[cprocessIndx].RBT;
@@ -393,6 +394,7 @@ void SRTN()
             {
                 // NO PROCESS ZONE
                 ctime++;
+                printf("\nXXXXXXXXXXXXXXXXX");
                 continue;
             }
 
@@ -412,6 +414,7 @@ void SRTN()
                 cprocessIndx = getLowestRBTProcess(&processQueue).id;
                 // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].RBT;
+                printf("\n--------------------------");
             }
         }
 
