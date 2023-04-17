@@ -575,7 +575,7 @@ void Round_Robin()
         // printf("\n\t\t\t\t%d", processCount);
     }
 
-    process[cprocessIndx].FT = ctime + overheadTime + process[cprocessIndx].RBT;
+    process[cprocessIndx].FT = ctime + process[cprocessIndx].RBT;
     process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
     process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
 
