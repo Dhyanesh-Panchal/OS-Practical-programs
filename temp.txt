@@ -56,6 +56,24 @@ Sample test for PriorityNonPremptive
 4
 0
 
+Sample test for PriorityNonPremptive
+5
+4
+0
+6
+3
+1
+10
+1
+2
+3
+2
+3
+5
+4
+0
+
+
 
 Sample test for Round Robin
 6

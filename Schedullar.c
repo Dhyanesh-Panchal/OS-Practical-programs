@@ -15,14 +15,6 @@ struct Node
     struct Node *next;
 };
 
-// void printProcess(struct Process p){
-//     printf("\nProcess P%d\nAT=%d\nBT=%d\n")
-// }
-
-// struct queue{
-//     struct Node* head;
-// };
-
 void printQueue(struct Node *queue)
 {
     printf("\n\n\t\t");
@@ -80,7 +72,54 @@ struct Node *RBTpriorityInsert(struct Node *queue, struct Process process)
     return queue;
 }
 
-struct Process getLowestRBTProcess(struct Node **queue)
+struct Node *priorityInsert(struct Node *queue, struct Process process)
+{
+
+    if (!queue)
+    {
+        queue = (struct Node *)malloc(sizeof(struct Node));
+        queue->data = process;
+        queue->next = NULL;
+        return queue;
+    }
+
+    struct Node *t = queue;
+
+    struct Node *new = (struct Node *)malloc(sizeof(struct Node));
+    new->data = process;
+    new->next = NULL;
+
+    if (t->next == NULL)
+    {
+        if (t->data.priority < new->data.priority)
+        {
+            t->next = new;
+        }
+        else
+        {
+            new->next = t;
+            queue = new;
+        }
+        return queue;
+    }
+    if (t->data.priority > new->data.priority)
+    {
+        new->next = t;
+        queue = new;
+        return queue;
+    }
+
+    while (t->next != NULL && t->next->data.priority < new->data.priority)
+    {
+        t = t->next;
+    }
+
+    new->next = t->next;
+    t->next = new;
+    return queue;
+}
+
+struct Process getLowestProcess(struct Node **queue)
 {
     struct Process *p = (struct Process *)malloc(sizeof(struct Process));
     *p = (*queue)->data;
@@ -259,7 +298,7 @@ void SJF()
             if (cprocessIndx == -1)
             {
                 // NO initial process
-                cprocessIndx = getLowestRBTProcess(&processQueue).id;
+                cprocessIndx = getLowestProcess(&processQueue).id;
                 printf("\n%d", cprocessIndx);
                 cprocessRBT = process[cprocessIndx].BT;
             }
@@ -276,7 +315,7 @@ void SJF()
                 ctime += overheadTime;
 
                 // Give CPU a new Process
-                cprocessIndx = getLowestRBTProcess(&processQueue).id;
+                cprocessIndx = getLowestProcess(&processQueue).id;
                 printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].BT;
             }
@@ -406,20 +445,13 @@ void SRTN()
                 continue;
             }
 
-            // if (cprocessIndx == -1)
-            // {
-            //     // NO initial process
-            //     cprocessIndx = getLowestRBTProcess(&processQueue).id;
-            //     printf("\n%d", cprocessIndx);
-            //     cprocessRBT = process[cprocessIndx].RBT;
-            // }
             else
             {
                 // Add overhead for switching
                 ctime += overheadTime;
 
                 // Give CPU a new Process
-                cprocessIndx = getLowestRBTProcess(&processQueue).id;
+                cprocessIndx = getLowestProcess(&processQueue).id;
                 // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].RBT;
                 printf("\n--------------------------");
@@ -459,7 +491,7 @@ void SRTN()
 void PriorityNonPremptive()
 {
     int np;
-    printf("\n\t\tSRTN Selected.\n No. of processes:");
+    printf("\n\t\tPriority Non premptive Selected.\n No. of processes:");
     scanf("%d", &np);
     struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
 
@@ -469,7 +501,7 @@ void PriorityNonPremptive()
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
-        printf("\t PRiority:");
+        printf("\t Priority:");
         scanf("%d", &process[i].priority);
         process[i].RBT = process[i].BT;
         process[i].id = i;
@@ -521,7 +553,7 @@ void PriorityNonPremptive()
 void PriorityPremptive()
 {
     int np;
-    printf("\n\t\tSJF Selected.\n No. of processes:");
+    printf("\n\t\tPriority Premptive Selected.\n No. of processes:");
     scanf("%d", &np);
     struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
 
@@ -531,13 +563,129 @@ void PriorityPremptive()
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
+        printf("\t Priority:");
+        scanf("%d", &process[i].priority);
         process[i].RBT = process[i].BT;
         process[i].id = i;
+        process[i].arrived = 0;
+        process[i].completed = 0;        
     }
 
     printf("\n\tOver Head Time: ");
     int overheadTime;
     scanf("%d", &overheadTime);
+
+    int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0;
+
+    struct Node *processQueue = NULL;
+
+    printf("\n--------------------------");
+    while (processCount != np)
+    {
+        // Insert Arriving processes in queue;
+        for (int i = 0; i < np; i++)
+        {
+            if (process[i].AT <= ctime && process[i].arrived == 0)
+            {
+                // New Process arrives
+                process[i].arrived = 1;
+
+                if (cprocessIndx == -1)
+                { // NO process initialized
+                    cprocessIndx = i;
+                    cprocessRBT = process[i].RBT;
+                }
+                else if (process[i].priority < process[cprocessIndx].priority)
+                {
+                    // Push running process to Queue
+                    processQueue = priorityInsert(processQueue, process[cprocessIndx]);
+
+                    if (process[i].AT != process[cprocessIndx].AT) // Process Switching due to PREMPTION
+                    {
+                        ctime += overheadTime; // Add overhead
+                        printf("\n--------------------------");
+                        if (overheadTime != 0)
+                        {
+                            for (int i = 0; i < overheadTime; i++)
+                            {
+                                printf("\nXXXXXXXXXXXXXXXXX");
+                            }
+                            printf("\n--------------------------");
+                        }
+                    }
+                    cprocessIndx = i;
+                    cprocessRBT = process[cprocessIndx].RBT;
+                }
+                else
+                {
+                    processQueue = priorityInsert(processQueue, process[i]);
+                }
+                // printQueue(processQueue);
+            }
+        }
+
+        if (cprocessRBT == 0 && cprocessIndx != -1)
+        {
+            // process completed, CPU free for new process
+
+            if (process[cprocessIndx].completed == 0)
+            {
+                // Fill data for completed process
+                process[cprocessIndx].FT = ctime;
+                process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
+                process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+                process[cprocessIndx].completed = 1;
+
+                processCount++;
+            }
+
+            if (processQueue == NULL)
+            {
+                // NO PROCESS ZONE
+                ctime++;
+                printf("\nXXXXXXXXXXXXXXXXX");
+                continue;
+            }
+
+            else
+            {
+                // Add overhead for switching
+                ctime += overheadTime;
+
+                // Give CPU a new Process
+                cprocessIndx = getLowestProcess(&processQueue).id;
+                // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
+                cprocessRBT = process[cprocessIndx].RBT;
+                printf("\n--------------------------");
+            }
+        }
+
+        ctime++;
+        cprocessRBT--;
+        process[cprocessIndx].RBT--;
+
+        printf("\n %2d |  P%d  |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
+    }
+
+    process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].RBT;
+    process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
+    process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+
+    // PRINT FINAL TABLE and AVERAGES
+    float totalTAT = 0, totalWT = 0;
+
+    printf("\n\nProcess | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
+    for (int i = 0; i < np; i++)
+    {
+        process[i].TAT = process[i].FT - process[i].AT;
+        process[i].WT = process[i].TAT - process[i].BT;
+
+        totalTAT += process[i].TAT;
+        totalWT += process[i].WT;
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+    }
+    printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
+    printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
 }
 
 int getNextIndx(struct Process *p, int length, int prevIndx, int ctime)
