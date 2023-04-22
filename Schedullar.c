@@ -15,11 +15,109 @@ struct Node
     struct Node *next;
 };
 
-struct ChartNode{
+struct ChartNode
+{
     int processIndx;
     int currentTime;
     struct ChartNode *next;
 };
+
+struct ChartNode *chartInsert(struct ChartNode *chart, int processIndx, int currentTime)
+{
+    struct ChartNode *new = (struct ChartNode *)malloc(sizeof(struct ChartNode));
+    new->processIndx = processIndx;
+    new->currentTime = currentTime;
+    new->next = NULL;
+
+    if (chart == NULL)
+    {
+        return new;
+    }
+
+    struct ChartNode *t = chart;
+    while (t->next != NULL)
+    {
+        t = t->next;
+    }
+
+    t->next = new;
+    return chart;
+}
+
+// get length for the Ganttchart
+int getLength(struct ChartNode *chart)
+{
+    int length = 0;
+    struct ChartNode *t = chart;
+    while (t != NULL)
+    {
+        length++;
+        if (t->processIndx == -2)
+        {
+            while (t && t->processIndx == -2)
+            {
+                t = t->next;
+            }
+        }
+        else
+        {
+            t = t->next;
+        }
+    }
+
+    return length;
+}
+void printChart(struct ChartNode *chart)
+{
+    printf("\nGantt Chart :\n\n");
+    int length = getLength(chart);
+
+    for (int i = 0; i < length; i++)
+    {
+        printf("+-------");
+    }
+    printf("+\n");
+    struct ChartNode *t = chart;
+    while (t != NULL)
+    {
+        if (t->processIndx == -1)
+        {
+            printf("|--OH-- ");
+        }
+        else if (t->processIndx == -2)
+        {
+            printf("|--NP-- ");
+            while (t->next != NULL && t->next->processIndx == -2) // Noprocess Zone
+                t = t->next;
+        }
+        else
+        {
+            printf("|P%d\t", t->processIndx);
+        }
+        t = t->next;
+    }
+    printf("|\n");
+    for (int i = 0; i < length; i++)
+    {
+        printf("+-------");
+    }
+    printf("+\n");
+    t = chart;
+    while (t != NULL)
+    {
+        if (t->processIndx == -2)
+        {
+            printf("%2d\t", t->currentTime);
+            while (t->next != NULL && t->next->processIndx == -2) // Noprocess Zone
+                t = t->next;
+        }
+        else
+        {
+            printf("%2d\t", t->currentTime);
+        }
+        t = t->next;
+    }
+}
 
 void printQueue(struct Node *queue)
 {
@@ -31,6 +129,7 @@ void printQueue(struct Node *queue)
     }
 }
 
+// processQueue Insertion based on RBT, For SRTN and SJF.
 struct Node *RBTpriorityInsert(struct Node *queue, struct Process process)
 {
 
@@ -78,6 +177,7 @@ struct Node *RBTpriorityInsert(struct Node *queue, struct Process process)
     return queue;
 }
 
+// processQueue insertion based on priority for priority based Scheduling.
 struct Node *priorityInsert(struct Node *queue, struct Process process)
 {
 
@@ -270,7 +370,7 @@ void SJF()
             {
                 processQueue = RBTpriorityInsert(processQueue, process[i]);
                 // printQueue(processQueue);
-                process[i].arrived=1;
+                process[i].arrived = 1;
             }
         }
 
@@ -369,7 +469,7 @@ void SRTN()
     int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0;
 
     struct Node *processQueue = NULL;
-    struct ChartNode *gantt_chart=NULL;
+    struct ChartNode *gantt_chart = NULL;
 
     while (processCount != np)
     {
@@ -385,18 +485,23 @@ void SRTN()
                 { // NO process initialized
                     cprocessIndx = i;
                     cprocessRBT = process[i].RBT;
+
+                    gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime); // new process start in ganttchart
                 }
                 else if (process[i].RBT < process[cprocessIndx].RBT)
                 {
                     // Push running process to Queue
                     processQueue = RBTpriorityInsert(processQueue, process[cprocessIndx]);
 
-                    if (process[i].AT != process[cprocessIndx].AT) // Process Switching due to PREMPTION
+                    if (overheadTime != 0) // Process Switching due to PREMPTION
                     {
-                        ctime += overheadTime; // Add overhead
+                        gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                        ctime += overheadTime;                             // Add overhead
                     }
                     cprocessIndx = i;
                     cprocessRBT = process[cprocessIndx].RBT;
+
+                    gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
                 }
                 else
                 {
@@ -419,36 +524,50 @@ void SRTN()
                 process[cprocessIndx].completed = 1;
 
                 processCount++;
+                if (processCount == np)
+                {
+                    break;
+                }
             }
 
-            if (processQueue == NULL)
+            if (processQueue == NULL) // for last process it will not perform
             {
+                gantt_chart = chartInsert(gantt_chart, -2, ctime); // Add noProccess Zone to Ganttchart
                 // NO PROCESS ZONE
                 ctime++;
+                cprocessIndx=-1;
                 continue;
             }
 
             else
             {
-                // Add overhead for switching
-                ctime += overheadTime;
+                if (overheadTime != 0)
+                {
+                    gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                    // Add overhead for switching
+                    ctime += overheadTime;
+                }
 
                 // Give CPU a new Process
                 cprocessIndx = getLowestProcess(&processQueue).id;
                 // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].RBT;
+
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
             }
         }
 
         ctime++;
         cprocessRBT--;
         process[cprocessIndx].RBT--;
-
     }
 
     // process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].RBT;
     // process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
     // process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+
+    printChart(gantt_chart);
+    printf("%2d", ctime);
 
     // PRINT FINAL TABLE and AVERAGES
     float totalTAT = 0, totalWT = 0;
