@@ -535,7 +535,7 @@ void SRTN()
                 gantt_chart = chartInsert(gantt_chart, -2, ctime); // Add noProccess Zone to Ganttchart
                 // NO PROCESS ZONE
                 ctime++;
-                cprocessIndx=-1;
+                cprocessIndx = -1;
                 continue;
             }
 
@@ -636,7 +636,7 @@ void PriorityNonPremptive()
     // PRINT FINAL TABLE and AVERAGES
     float totalTAT = 0, totalWT = 0;
 
-    printf("\n\nProcess | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
+    printf("\n\nProcess | ArrivalTime | BurstTime | Priority | FinishTime | TurnAroundTime | WaitingTime");
     for (int i = 0; i < np; i++)
     {
         process[i].TAT = process[i].FT - process[i].AT;
@@ -644,7 +644,7 @@ void PriorityNonPremptive()
 
         totalTAT += process[i].TAT;
         totalWT += process[i].WT;
-        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+        printf("\n   P%d\t    %5d\t%5d\t   %5d\t %5d\t      %5d\t     %5d", process[i].id, process[i].AT, process[i].BT, process[i].priority, process[i].FT, process[i].TAT, process[i].WT);
     }
     printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
@@ -678,8 +678,8 @@ void PriorityPremptive()
     int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0;
 
     struct Node *processQueue = NULL;
+    struct ChartNode *gantt_chart = NULL;
 
-    // printf("\n--------------------------");
     while (processCount != np)
     {
         // Insert Arriving processes in queue;
@@ -694,27 +694,23 @@ void PriorityPremptive()
                 { // NO process initialized
                     cprocessIndx = i;
                     cprocessRBT = process[i].RBT;
+
+                    gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime); // new process start in ganttchart
                 }
                 else if (process[i].priority < process[cprocessIndx].priority)
                 {
                     // Push running process to Queue
                     processQueue = priorityInsert(processQueue, process[cprocessIndx]);
 
-                    if (process[i].AT != process[cprocessIndx].AT) // Process Switching due to PREMPTION
+                    if (overheadTime != 0) // Process Switching due to PREMPTION
                     {
-                        ctime += overheadTime; // Add overhead
-                        // printf("\n--------------------------");
-                        // if (overheadTime != 0)
-                        // {
-                        //     for (int i = 0; i < overheadTime; i++)
-                        //     {
-                        //         // printf("\nXXXXXXXXXXXXXXXXX");
-                        //     }
-                        //     printf("\n--------------------------");
-                        // }
+                        gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                        ctime += overheadTime;                             // Add overhead
                     }
                     cprocessIndx = i;
                     cprocessRBT = process[cprocessIndx].RBT;
+
+                    gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
                 }
                 else
                 {
@@ -737,44 +733,55 @@ void PriorityPremptive()
                 process[cprocessIndx].completed = 1;
 
                 processCount++;
+                if (processCount == np)
+                {
+                    break;
+                }
             }
 
             if (processQueue == NULL)
             {
+                gantt_chart = chartInsert(gantt_chart, -2, ctime);
                 // NO PROCESS ZONE
                 ctime++;
-                // printf("\nXXXXXXXXXXXXXXXXX");
+                cprocessIndx = -1;
                 continue;
             }
 
             else
             {
-                // Add overhead for switching
-                ctime += overheadTime;
+                if (overheadTime != 0)
+                {
+                    gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                    // Add overhead for switching
+                    ctime += overheadTime;
+                }
 
                 // Give CPU a new Process
                 cprocessIndx = getLowestProcess(&processQueue).id;
                 // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].RBT;
-                // printf("\n--------------------------");
+
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
             }
         }
 
         ctime++;
         cprocessRBT--;
         process[cprocessIndx].RBT--;
-
-        // printf("\n %2d |  P%d  |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
     }
 
-    process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].RBT;
-    process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
-    process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+    // process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].RBT;
+    // process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
+    // process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+
+    printChart(gantt_chart);
+    printf("%2d", ctime);
 
     // PRINT FINAL TABLE and AVERAGES
     float totalTAT = 0, totalWT = 0;
 
-    printf("\n\nProcess | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
+    printf("\n\nProcess | ArrivalTime | BurstTime | Priority | FinishTime | TurnAroundTime | WaitingTime");
     for (int i = 0; i < np; i++)
     {
         process[i].TAT = process[i].FT - process[i].AT;
@@ -782,7 +789,7 @@ void PriorityPremptive()
 
         totalTAT += process[i].TAT;
         totalWT += process[i].WT;
-        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+        printf("\n   P%d\t    %5d\t%5d\t   %5d\t %5d\t      %5d\t     %5d", process[i].id, process[i].AT, process[i].BT, process[i].priority, process[i].FT, process[i].TAT, process[i].WT);
     }
     printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
@@ -901,7 +908,7 @@ void Round_Robin()
 
         totalTAT += process[i].TAT;
         totalWT += process[i].WT;
-        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
     }
     printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
