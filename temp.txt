@@ -56,7 +56,7 @@ Sample test for PriorityNonPremptive
 4
 0
 
-Sample test for PriorityNonPremptive
+Sample test for Priority Premptive
 5
 4
 0

@@ -3,7 +3,7 @@
 
 struct Process
 {
-    int AT, BT, FT, TAT, WT, id,priority;
+    int AT, BT, FT, TAT, WT, id, priority;
     int RBT; // Remaining Burst Time
     int arrived;
     int completed;
@@ -13,6 +13,12 @@ struct Node
 {
     struct Process data;
     struct Node *next;
+};
+
+struct ChartNode{
+    int processIndx;
+    int currentTime;
+    struct ChartNode *next;
 };
 
 void printQueue(struct Node *queue)
@@ -179,9 +185,8 @@ void SortByRBT(struct Process *process, int length)
 
 void FCFS()
 {
-
     int np;
-    printf("\n\t\tFCFS Selected.\n No. of processes:");
+    printf("\n\t\tFisrt Come First Serve Selected.\n No. of processes:");
     scanf("%d", &np);
     struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
 
@@ -201,11 +206,6 @@ void FCFS()
 
     SortByAT(process, np);
 
-    // for(int i=0;i<np;i++){
-    //     printf("\n %d",process[i].AT);
-    // }
-
-    // ctime = current time
     int ctime;
     ctime = process[0].AT;
     for (int i = 0; i < np; i++)
@@ -239,7 +239,7 @@ void SJF()
 {
 
     int np;
-    printf("\n\t\tSJF Selected.\n No. of processes:");
+    printf("\n\t\tShortest Job First Selected.\n No. of processes:");
     scanf("%d", &np);
     struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
 
@@ -252,13 +252,12 @@ void SJF()
         process[i].RBT = process[i].BT;
         process[i].id = i;
         process[i].completed = 0;
+        process[i].arrived = 0;
     }
 
     printf("\n\tOver Head Time: ");
     int overheadTime;
     scanf("%d", &overheadTime);
-
-    // SortByAT(process,np);
 
     int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 1;
     struct Node *processQueue = NULL;
@@ -267,10 +266,11 @@ void SJF()
         // Insert Arriving processes in queue;
         for (int i = 0; i < np; i++)
         {
-            if (process[i].AT == ctime)
+            if (process[i].AT <= ctime && process[i].arrived == 0)
             {
                 processQueue = RBTpriorityInsert(processQueue, process[i]);
-                printQueue(processQueue);
+                // printQueue(processQueue);
+                process[i].arrived=1;
             }
         }
 
@@ -304,14 +304,7 @@ void SJF()
             }
             else
             {
-                // // Fill data for completed process
-                // process[cprocessIndx].FT = ctime;
-                // process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
-                // process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
 
-                // processCount++;
-
-                // Add overhead for switching
                 ctime += overheadTime;
 
                 // Give CPU a new Process
@@ -327,7 +320,7 @@ void SJF()
     }
 
     // FOR LAST PROCESS
-    process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].BT;
+    process[cprocessIndx].FT = ctime - 1 + process[cprocessIndx].BT;
     process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
     process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
 
@@ -351,7 +344,7 @@ void SJF()
 void SRTN()
 {
     int np;
-    printf("\n\t\tSRTN Selected.\n No. of processes:");
+    printf("\n\t\tShortest Remaining Time Next (SRTN) Selected.\n No. of processes:");
     scanf("%d", &np);
     struct Process *process = (struct Process *)calloc(np, sizeof(struct Process));
 
@@ -376,8 +369,8 @@ void SRTN()
     int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0;
 
     struct Node *processQueue = NULL;
+    struct ChartNode *gantt_chart=NULL;
 
-    printf("\n--------------------------");
     while (processCount != np)
     {
         // Insert Arriving processes in queue;
@@ -401,15 +394,6 @@ void SRTN()
                     if (process[i].AT != process[cprocessIndx].AT) // Process Switching due to PREMPTION
                     {
                         ctime += overheadTime; // Add overhead
-                        printf("\n--------------------------");
-                        if (overheadTime != 0)
-                        {
-                            for (int i = 0; i < overheadTime; i++)
-                            {
-                                printf("\nXXXXXXXXXXXXXXXXX");
-                            }
-                            printf("\n--------------------------");
-                        }
                     }
                     cprocessIndx = i;
                     cprocessRBT = process[cprocessIndx].RBT;
@@ -441,7 +425,6 @@ void SRTN()
             {
                 // NO PROCESS ZONE
                 ctime++;
-                printf("\nXXXXXXXXXXXXXXXXX");
                 continue;
             }
 
@@ -454,7 +437,6 @@ void SRTN()
                 cprocessIndx = getLowestProcess(&processQueue).id;
                 // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].RBT;
-                printf("\n--------------------------");
             }
         }
 
@@ -462,12 +444,11 @@ void SRTN()
         cprocessRBT--;
         process[cprocessIndx].RBT--;
 
-        printf("\n %2d |  P%d  |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
     }
 
-    process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].RBT;
-    process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
-    process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+    // process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].RBT;
+    // process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
+    // process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
 
     // PRINT FINAL TABLE and AVERAGES
     float totalTAT = 0, totalWT = 0;
@@ -485,8 +466,6 @@ void SRTN()
     printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
 }
-
-
 
 void PriorityNonPremptive()
 {
@@ -513,13 +492,15 @@ void PriorityNonPremptive()
     int overheadTime;
     scanf("%d", &overheadTime);
 
-    int current_time=0;
-    int total_waiting_time=0;
-    int total_turn_around_time=0;
+    int current_time = 0;
+    int total_waiting_time = 0;
+    int total_turn_around_time = 0;
 
     // run the processes
-    for(int i = 0; i < np; i++) {
-        if(current_time < process[i].AT) {
+    for (int i = 0; i < np; i++)
+    {
+        if (current_time < process[i].AT)
+        {
             current_time = process[i].AT;
         }
 
@@ -568,7 +549,7 @@ void PriorityPremptive()
         process[i].RBT = process[i].BT;
         process[i].id = i;
         process[i].arrived = 0;
-        process[i].completed = 0;        
+        process[i].completed = 0;
     }
 
     printf("\n\tOver Head Time: ");
@@ -579,7 +560,7 @@ void PriorityPremptive()
 
     struct Node *processQueue = NULL;
 
-    printf("\n--------------------------");
+    // printf("\n--------------------------");
     while (processCount != np)
     {
         // Insert Arriving processes in queue;
@@ -603,15 +584,15 @@ void PriorityPremptive()
                     if (process[i].AT != process[cprocessIndx].AT) // Process Switching due to PREMPTION
                     {
                         ctime += overheadTime; // Add overhead
-                        printf("\n--------------------------");
-                        if (overheadTime != 0)
-                        {
-                            for (int i = 0; i < overheadTime; i++)
-                            {
-                                printf("\nXXXXXXXXXXXXXXXXX");
-                            }
-                            printf("\n--------------------------");
-                        }
+                        // printf("\n--------------------------");
+                        // if (overheadTime != 0)
+                        // {
+                        //     for (int i = 0; i < overheadTime; i++)
+                        //     {
+                        //         // printf("\nXXXXXXXXXXXXXXXXX");
+                        //     }
+                        //     printf("\n--------------------------");
+                        // }
                     }
                     cprocessIndx = i;
                     cprocessRBT = process[cprocessIndx].RBT;
@@ -643,7 +624,7 @@ void PriorityPremptive()
             {
                 // NO PROCESS ZONE
                 ctime++;
-                printf("\nXXXXXXXXXXXXXXXXX");
+                // printf("\nXXXXXXXXXXXXXXXXX");
                 continue;
             }
 
@@ -656,7 +637,7 @@ void PriorityPremptive()
                 cprocessIndx = getLowestProcess(&processQueue).id;
                 // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].RBT;
-                printf("\n--------------------------");
+                // printf("\n--------------------------");
             }
         }
 
@@ -664,7 +645,7 @@ void PriorityPremptive()
         cprocessRBT--;
         process[cprocessIndx].RBT--;
 
-        printf("\n %2d |  P%d  |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
+        // printf("\n %2d |  P%d  |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
     }
 
     process[cprocessIndx].FT = ctime - 1 + overheadTime + process[cprocessIndx].RBT;
@@ -729,7 +710,7 @@ void Round_Robin()
     SortByAT(process, np);
 
     int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0, cSliceCounter = time_slice;
-    printf("\ntime| process | RBT\n----------------------");
+    // printf("\ntime| process | RBT\n----------------------");
     while (processCount != np)
     {
         if (process[0].AT <= ctime)
@@ -759,7 +740,7 @@ void Round_Robin()
                 cprocessIndx = getNextIndx(process, np, cprocessIndx, ctime);
                 cprocessRBT = process[cprocessIndx].RBT;
                 cSliceCounter = time_slice;
-                printf("\n----------------------");
+                // printf("\n----------------------");
             }
 
             if (cSliceCounter == 0)
@@ -771,7 +752,7 @@ void Round_Robin()
                     ctime += overheadTime;
 
                     cprocessIndx = nextIndx;
-                    printf("\n----------------------");
+                    // printf("\n----------------------");
                 }
                 cprocessRBT = process[cprocessIndx].RBT;
                 cSliceCounter = time_slice;
@@ -780,7 +761,7 @@ void Round_Robin()
             cSliceCounter--;
             cprocessRBT--;
             process[cprocessIndx].RBT--;
-            printf("\n %2d |   P%d   |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
+            // printf("\n %2d |   P%d   |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
         }
         ctime++;
         // printf("\n\t\t\t\t%d", processCount);
@@ -811,7 +792,7 @@ void main()
 {
 
     int selection;
-    printf("Select Schedular:\n1) FCFS\n2) SJF\n3) SRTN\n4)Priority (Non-Premptive)\n5) Priority Premptive\n6)Round Robin");
+    printf("Select Schedular:\n1) First Come First Serve\n2) Shortest Job First(Non-premptive)\n3) Shortest Remaining Time Next (SRTN)\n4)Priority (Non-Premptive)\n5) Priority Premptive\n6)Round Robin");
     scanf("%d", &selection);
     switch (selection)
     {
