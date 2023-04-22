@@ -329,7 +329,7 @@ void FCFS()
 
         totalTAT += process[i].TAT;
         totalWT += process[i].WT;
-        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
     }
     printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
@@ -435,7 +435,7 @@ void SJF()
 
         totalTAT += process[i].TAT;
         totalWT += process[i].WT;
-        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
     }
     printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
@@ -834,9 +834,9 @@ void Round_Robin()
     scanf("%d", &time_slice);
 
     SortByAT(process, np);
+    struct ChartNode *gantt_chart = NULL;
 
     int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0, cSliceCounter = time_slice;
-    // printf("\ntime| process | RBT\n----------------------");
     while (processCount != np)
     {
         if (process[0].AT <= ctime)
@@ -845,6 +845,7 @@ void Round_Robin()
             { // No process selected
                 cprocessIndx = 0;
                 cprocessRBT = process[cprocessIndx].RBT;
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime); // new process start in ganttchart
                 processCount++;
             }
 
@@ -861,12 +862,17 @@ void Round_Robin()
                 processCount++;
 
                 // switch Process
-                ctime += overheadTime;
+                if (overheadTime != 0)
+                {
+                    gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                    ctime += overheadTime;
+                }
 
                 cprocessIndx = getNextIndx(process, np, cprocessIndx, ctime);
                 cprocessRBT = process[cprocessIndx].RBT;
                 cSliceCounter = time_slice;
-                // printf("\n----------------------");
+
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
             }
 
             if (cSliceCounter == 0)
@@ -875,28 +881,34 @@ void Round_Robin()
                 int nextIndx = getNextIndx(process, np, cprocessIndx, ctime);
                 if (nextIndx != cprocessIndx)
                 {
-                    ctime += overheadTime;
+                    if (overheadTime != 0)
+                    {
+                        gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                        ctime += overheadTime;
+                    }
 
                     cprocessIndx = nextIndx;
-                    // printf("\n----------------------");
                 }
                 cprocessRBT = process[cprocessIndx].RBT;
                 cSliceCounter = time_slice;
+
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
             }
 
             cSliceCounter--;
             cprocessRBT--;
             process[cprocessIndx].RBT--;
-            // printf("\n %2d |   P%d   |   %2d  ", ctime, process[cprocessIndx].id, process[cprocessIndx].RBT);
         }
         ctime++;
         // printf("\n\t\t\t\t%d", processCount);
     }
-
-    process[cprocessIndx].FT = ctime + process[cprocessIndx].RBT;
+    ctime++;
+    process[cprocessIndx].FT = ctime - 1 + process[cprocessIndx].RBT;
     process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
     process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
 
+    printChart(gantt_chart);
+    printf("%2d", ctime);
     // PRINT FINAL TABLE and AVERAGES
     float totalTAT = 0, totalWT = 0;
 
