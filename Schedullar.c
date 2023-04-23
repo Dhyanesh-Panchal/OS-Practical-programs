@@ -307,21 +307,35 @@ void FCFS()
     SortByAT(process, np);
 
     int ctime;
+    struct ChartNode *gantt_chart = NULL;
+
     ctime = process[0].AT;
+    if (ctime != 0)
+    {
+        gantt_chart = chartInsert(gantt_chart, -2, 0);
+    }
     for (int i = 0; i < np; i++)
     {
         if (process[i].AT > ctime)
         {
             ctime = process[i].AT;
         }
+        gantt_chart = chartInsert(gantt_chart, i, ctime); // new process started
         ctime += process[i].BT;
         process[i].FT = ctime;
-        ctime += overheadTime;
+        if (overheadTime != 0)
+        {
+            gantt_chart = chartInsert(gantt_chart, -1, ctime);
+            ctime += overheadTime;
+        }
     }
+
+    printChart(gantt_chart);
+    printf("%2d", ctime);
 
     float totalTAT = 0, totalWT = 0;
 
-    printf("Process | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
+    printf("\n\nProcess | ArrivalTime | BurstTime | FinishTime | TurnAroundTime | WaitingTime");
     for (int i = 0; i < np; i++)
     {
         process[i].TAT = process[i].FT - process[i].AT;
@@ -394,7 +408,7 @@ void SJF()
             {
                 gantt_chart = chartInsert(gantt_chart, -2, ctime);
                 ctime++;
-                cprocessIndx=-1;
+                cprocessIndx = -1;
                 continue;
             }
 
