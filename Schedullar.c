@@ -637,27 +637,77 @@ void PriorityNonPremptive()
     int overheadTime;
     scanf("%d", &overheadTime);
 
-    int current_time = 0;
-    int total_waiting_time = 0;
-    int total_turn_around_time = 0;
+    int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0;
+    struct Node *processQueue = NULL;
+    struct ChartNode *gantt_chart = NULL;
 
-    // run the processes
-    for (int i = 0; i < np; i++)
+    while (processCount != np)
     {
-        if (current_time < process[i].AT)
+        // Insert Arriving processes in queue;
+        for (int i = 0; i < np; i++)
         {
-            current_time = process[i].AT;
+            if (process[i].AT <= ctime && process[i].arrived == 0)
+            {
+                processQueue = priorityInsert(processQueue, process[i]);
+                // printQueue(processQueue);
+                process[i].arrived = 1;
+            }
         }
 
-        current_time += overheadTime;
-        process[i].FT = current_time + process[i].BT;
-        process[i].TAT = process[i].FT - process[i].AT;
-        process[i].WT = process[i].TAT - process[i].BT;
-        total_waiting_time += process[i].WT;
-        total_turn_around_time += process[i].TAT;
+        if (cprocessRBT == 0)
+        {
+            // process completed, CPU free for new process
+            if (process[cprocessIndx].completed == 0)
+            {
+                // Fill data for completed process
+                process[cprocessIndx].FT = ctime;
+                process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
+                process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+                process[cprocessIndx].completed = 1;
 
-        current_time += process[i].BT;
+                processCount++;
+            }
+
+            if (processQueue == NULL)
+            {
+                gantt_chart = chartInsert(gantt_chart, -2, ctime);
+                ctime++;
+                cprocessIndx = -1;
+                continue;
+            }
+
+            if (cprocessIndx == -1)
+            {
+                // NO initial process
+                cprocessIndx = getLowestProcess(&processQueue).id;
+                // printf("\n%d", cprocessIndx);
+                cprocessRBT = process[cprocessIndx].BT;
+
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime); // new process start in ganttchart
+            }
+            else
+            {
+                if (overheadTime != 0)
+                {
+                    gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                    ctime += overheadTime;
+                }
+
+                // Give CPU a new Process
+                cprocessIndx = getLowestProcess(&processQueue).id;
+                // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
+                cprocessRBT = process[cprocessIndx].BT;
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
+            }
+        }
+
+        ctime++;
+        cprocessRBT--;
+        process[cprocessIndx].RBT--;
     }
+
+    printChart(gantt_chart);
+    printf("%2d", ctime);
 
     // PRINT FINAL TABLE and AVERAGES
     float totalTAT = 0, totalWT = 0;
