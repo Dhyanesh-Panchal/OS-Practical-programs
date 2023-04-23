@@ -292,7 +292,7 @@ void FCFS()
 
     for (int i = 0; i < np; i++)
     {
-        printf("For Process P%d:\n\tArrival time:", i + 1);
+        printf("For Process P%d:\n\tArrival time:", i);
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
@@ -345,7 +345,7 @@ void SJF()
 
     for (int i = 0; i < np; i++)
     {
-        printf("For Process P%d:\n\tArrival time:", i + 1);
+        printf("For Process P%d:\n\tArrival time:", i);
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
@@ -359,8 +359,10 @@ void SJF()
     int overheadTime;
     scanf("%d", &overheadTime);
 
-    int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 1;
+    int ctime = 0, cprocessIndx = -1, cprocessRBT = 0, processCount = 0;
     struct Node *processQueue = NULL;
+    struct ChartNode *gantt_chart = NULL;
+
     while (processCount != np)
     {
         // Insert Arriving processes in queue;
@@ -377,7 +379,6 @@ void SJF()
         if (cprocessRBT == 0)
         {
             // process completed, CPU free for new process
-
             if (process[cprocessIndx].completed == 0)
             {
                 // Fill data for completed process
@@ -391,7 +392,9 @@ void SJF()
 
             if (processQueue == NULL)
             {
+                gantt_chart = chartInsert(gantt_chart, -2, ctime);
                 ctime++;
+                cprocessIndx=-1;
                 continue;
             }
 
@@ -399,18 +402,24 @@ void SJF()
             {
                 // NO initial process
                 cprocessIndx = getLowestProcess(&processQueue).id;
-                printf("\n%d", cprocessIndx);
+                // printf("\n%d", cprocessIndx);
                 cprocessRBT = process[cprocessIndx].BT;
+
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime); // new process start in ganttchart
             }
             else
             {
-
-                ctime += overheadTime;
+                if (overheadTime != 0)
+                {
+                    gantt_chart = chartInsert(gantt_chart, -1, ctime); // pushing overhead time to ganttchart
+                    ctime += overheadTime;
+                }
 
                 // Give CPU a new Process
                 cprocessIndx = getLowestProcess(&processQueue).id;
-                printf("\n%d  and processCount=%d", cprocessIndx, processCount);
+                // printf("\n%d  and processCount=%d", cprocessIndx, processCount);
                 cprocessRBT = process[cprocessIndx].BT;
+                gantt_chart = chartInsert(gantt_chart, cprocessIndx, ctime);
             }
         }
 
@@ -420,9 +429,12 @@ void SJF()
     }
 
     // FOR LAST PROCESS
-    process[cprocessIndx].FT = ctime - 1 + process[cprocessIndx].BT;
-    process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
-    process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+    // process[cprocessIndx].FT = ctime - 1 + process[cprocessIndx].BT;
+    // process[cprocessIndx].TAT = process[cprocessIndx].FT - process[cprocessIndx].AT;
+    // process[cprocessIndx].WT = process[cprocessIndx].TAT - process[cprocessIndx].BT;
+
+    printChart(gantt_chart);
+    printf("%2d", ctime);
 
     // PRINT FINAL TABLE and AVERAGES
     float totalTAT = 0, totalWT = 0;
@@ -450,7 +462,7 @@ void SRTN()
 
     for (int i = 0; i < np; i++)
     {
-        printf("For Process P%d:\n\tArrival time:", i + 1);
+        printf("For Process P%d:\n\tArrival time:", i);
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
@@ -595,7 +607,7 @@ void PriorityNonPremptive()
 
     for (int i = 0; i < np; i++)
     {
-        printf("For Process P%d:\n\tArrival time:", i + 1);
+        printf("For Process P%d:\n\tArrival time:", i);
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
@@ -659,7 +671,7 @@ void PriorityPremptive()
 
     for (int i = 0; i < np; i++)
     {
-        printf("For Process P%d:\n\tArrival time:", i + 1);
+        printf("For Process P%d:\n\tArrival time:", i);
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
@@ -815,7 +827,7 @@ void Round_Robin()
 
     for (int i = 0; i < np; i++)
     {
-        printf("For Process P%d:\n\tArrival time:", i + 1);
+        printf("For Process P%d:\n\tArrival time:", i);
         scanf("%d", &process[i].AT);
         printf("\t Burst Time:");
         scanf("%d", &process[i].BT);
