@@ -4,6 +4,7 @@
         "*.excalidrawlib": "json",
         "algorithm": "c",
         "windows.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "stdio.h": "c"
     }
 }
