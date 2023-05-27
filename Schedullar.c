@@ -606,7 +606,7 @@ void SRTN()
 
         totalTAT += process[i].TAT;
         totalWT += process[i].WT;
-        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id + 1, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
+        printf("\n   P%d\t    %5d\t%5d\t      %5d\t     %5d\t    %5d", process[i].id, process[i].AT, process[i].BT, process[i].FT, process[i].TAT, process[i].WT);
     }
     printf("\nAverage Turn Around Time: %4.3f ms", totalTAT / (float)np);
     printf("\nAverage Waiting Time: %4.3f ms", totalWT / (float)np);
@@ -1006,7 +1006,7 @@ void main()
 {
 
     int selection;
-    printf("Select Schedular:\n1) First Come First Serve\n2) Shortest Job First(Non-premptive)\n3) Shortest Remaining Time Next (SRTN)\n4)Priority (Non-Premptive)\n5) Priority Premptive\n6)Round Robin");
+    printf("Select Schedular:\n1) First Come First Serve\n2) Shortest Job First(Non-premptive)\n3) Shortest Remaining Time Next (SRTN)\n4) Priority (Non-Premptive)\n5) Priority Premptive\n6) Round Robin");
     scanf("%d", &selection);
     switch (selection)
     {
