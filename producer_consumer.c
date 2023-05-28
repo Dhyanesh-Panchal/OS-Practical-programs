@@ -13,8 +13,6 @@ semaphore empty = bufferSize;
 /********** SEMAPHORE FUNCTIONS ***********/
 void up(semaphore *lock)
 {
-    //****No NEED==>// while((*lock)>=bufferSize); // This condition is for Full (when buffer is full, it will stop producer to produce)
-
     (*lock)++;
 }
 
@@ -23,7 +21,7 @@ void down(semaphore *lock)
     while ((*lock) <= 0)
         ; // Loop untill the lock is released
     (*lock)--;
-    // printf("Lock Acquired!");
+
 }
 /****************************************/
 
@@ -62,12 +60,12 @@ void *producer(void *buffer)
         item = rand(); // generate a random item.
         down(&empty);
         down(&mutex);
-        // printf("\n\n\nPRODUCER ==> Lock Acquired!!!!");
+
         insertBuffer(item, (int *)buffer);
         printf("\nPRODUCER ==> Inserted Item: %d  in buffer", item);
         printBuffer(buffer);
         sleep(1); // Just to make process visible
-        // printf("\nPRODUCER ==> Lock Release!!!!");
+
         up(&mutex);
         up(&full);
     }
@@ -80,9 +78,9 @@ void *consumer(void *buffer)
     {
         down(&full);
         down(&mutex);
-        // printf("\n\n\nCONSUMER ==> Lock Acquired!!!!");
+
         item = getItemFromBuffer((int *)buffer);
-        // printf("\nCONSUMER ==> Lock Release!!!!");
+
         sleep(1); // Just to make process visible
         up(&mutex);
         up(&empty);
