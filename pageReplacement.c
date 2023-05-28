@@ -12,7 +12,7 @@ void printFrame(int *frame)
     printf("+\n\t");
     for (int i = 0; i < k; i++)
     {
-        if (frame[i] == 0)
+        if (frame[i] == -1)
         {
             printf("|    ", frame[i]);
         }
@@ -62,8 +62,54 @@ void FIFO(int *refStr, int *frame)
     printf("\nTotal Page fault: %d\nTotal Hits: %d\nHit Ratio: %0.2f \nMiss Ratio: %0.2f", tMiss, tHit, ((float)tHit) / n, ((float)tMiss) / n);
 }
 
+int getLRUindx(int *refStr, int *frame,int refindx)
+{   
+    // Initial Stage
+    if(refindx<3)
+    {
+        return refindx;
+    }
+    int indx=0,max=0;
+    for(int i=0;i<k;i++)
+    {
+        int temp=1;
+        while(refStr[refindx-temp]!=frame[i])
+        {
+            temp++;
+        }
+        if(temp>max)
+        {
+            max = temp;
+            indx =i;
+        }
+    }
+
+    return indx;
+}
+
 void LRU(int *refStr, int *frame)
 {
+    int tMiss = 0, tHit = 0, prevIndx = 0;
+    for (int i = 0; i < n; i++)
+    {
+
+        if (isHit(refStr[i], frame))
+        {
+            printf("\n\n\tPage:%d ==> Hit\n", refStr[i]);
+            printFrame(frame);
+            tHit++;
+        }
+        else
+        {
+            printf("\n\n\tPage:%d ==> Miss\n", refStr[i]);
+            tMiss++;
+            int indx = getLRUindx(refStr,frame,i);
+            frame[indx]=refStr[i];
+            printFrame(frame);
+        }
+    }
+
+    printf("\nTotal Page fault: %d\nTotal Hits: %d\nHit Ratio: %0.2f \nMiss Ratio: %0.2f", tMiss, tHit, ((float)tHit) / n, ((float)tMiss) / n);
 }
 
 void main()
@@ -81,6 +127,10 @@ void main()
     printf("Enter the lenght of frame:");
     scanf("%d", &k);
     int *frame = (int *)calloc(k, sizeof(int));
+    for (int i = 0; i < k; i++)  // Initialize frame empty
+    {
+        frame[i] = -1;
+    }
 
     int selector;
     printf("Select the Algorithm:\n1) FIFO\n2) LRU\nEnter Choice:");
