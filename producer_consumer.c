@@ -21,7 +21,6 @@ void down(semaphore *lock)
     while ((*lock) <= 0)
         ; // Loop untill the lock is released
     (*lock)--;
-
 }
 /****************************************/
 
@@ -33,10 +32,18 @@ void insertBuffer(int item, int *buffer)
 
 int getItemFromBuffer(int *buffer)
 {
-    int item = buffer[0];          // Get data
-    for (int i = 0; i < full; i++) // shift remaining Data
+    int item = buffer[0]; // Get data
+
+    if (full == 0)
     {
-        buffer[i] = buffer[i + 1];
+        buffer[0]=0; // it represents empty
+    }
+    else
+    {
+        for (int i = 0; i < full; i++) // shift remaining Data
+        {
+            buffer[i] = buffer[i + 1];
+        }
     }
 
     return item;
@@ -44,10 +51,11 @@ int getItemFromBuffer(int *buffer)
 
 void printBuffer(int *buffer)
 {
-    printf("\n\n The Buffer is: ");
+    printf("\nThe Buffer is: ");
     for (int i = 0; i <= full; i++)
     {
-        printf("%d, ", buffer[i]);
+        (buffer[i]!=0)?(printf("%d, ", buffer[i])):(printf(""));
+        // printf("%d, ", buffer[i]);
     }
 }
 /*************************************/
@@ -62,12 +70,12 @@ void *producer(void *buffer)
         down(&mutex);
 
         insertBuffer(item, (int *)buffer);
-        printf("\nPRODUCER ==> Inserted Item: %d  in buffer", item);
+        printf("\n\nPRODUCER ==> Inserted Item: %d  in buffer", item);
         printBuffer(buffer);
-        sleep(1); // Just to make process visible
 
         up(&mutex);
         up(&full);
+        sleep(1); // Just to make process visible
     }
 }
 
@@ -80,12 +88,14 @@ void *consumer(void *buffer)
         down(&mutex);
 
         item = getItemFromBuffer((int *)buffer);
+        printf("\n\nCONSUMER ==> Removed Item %d from buffer", item);
 
-        sleep(1); // Just to make process visible
         up(&mutex);
         up(&empty);
 
+        printBuffer(buffer);
         printf("\nCONSUMER ==> Consuming Item %d", item);
+        sleep(2); // Just to make process visible
     }
 }
 
