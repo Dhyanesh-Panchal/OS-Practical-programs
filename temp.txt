@@ -1,3 +1,14 @@
+PAGE REPLACEMENT ALGO
+
+FIFO:-
+10
+4 7 6 1 7 6 1 2 7 2
+3
+
+
+
+
+
 Sample test for FCFS
 1
 4
